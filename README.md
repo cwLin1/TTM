@@ -1,9 +1,9 @@
 # TTM
 
-Data Preprocessing
+Data Preprocessing 
 	python utils/data_preprocess.py
 
-Dataset
+Dataset 
 	python utils/datasets.py
 
 Data Format 
