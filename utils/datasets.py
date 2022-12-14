@@ -91,28 +91,37 @@ class Ego4D(Dataset):
         while ret and frame_num < end_frame:
             x1, x2, y1, y2 = bbox[frame_num-start_frame]
             if x1 == -1 and x2 == -1 and y1 == -1 and y2 == -1:
-                image = np.zeros((224,224,3)).astype('uint8')
+                segment = torch.cat((segment, torch.zeros(1, 3, 224, 224)), 0)
             else:
                 image = frame[y1:y2, x1:x2]
-            image = Image.fromarray(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
+                image = Image.fromarray(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
 
-            image = self.transform(image).unsqueeze(0)
-            segment = torch.cat((segment, image), 0)
+                image = self.transform(image).unsqueeze(0)
+                segment = torch.cat((segment, image), 0)
 
             ret, frame = cap.read()
             frame_num += 1
 
+        sz = segment.size(0)
+        padding_size = 64 * int(np.ceil((sz)/64)) - sz
+        segment = torch.cat((segment, torch.zeros(padding_size, 3, 224, 224)), 0)
+        segment = segment.view(segment.size(0)//64, 64, 3, 224, 224)
         ori_audio, ori_sample_rate = torchaudio.load(audio_path, normalize = True)
         sample_rate = 16000
-        transform = torchaudio.transforms.Resample(ori_sample_rate, sample_rate)
-        audio = transform(ori_audio)
+        audio_resample = torchaudio.transforms.Resample(ori_sample_rate, sample_rate)
+        audio = audio_resample(ori_audio)
         # print(audio.size())
 
         onset = int(start_frame/30 * sample_rate)
         offset = int(end_frame/30 * sample_rate)
-        crop_audio = audio[:, onset:offset]
 
-        return segment, crop_audio, label
+        crop_audio = torch.zeros(2, 34134 * int(np.ceil((offset-onset)/34134)))
+        crop_audio[:, 0:offset - onset] = audio[:, onset:offset]
+        crop_audio = crop_audio.view(int(np.ceil((offset-onset)/34134)), 2, 34134)
+        # crop_audio = audio[:, onset:offset]
+        audio_transform = torchaudio.transforms.MFCC()
+
+        return segment, audio_transform(crop_audio), label
 
 def get_train_val_loader(path, split):
     num_train = len(os.listdir(os.path.join(path, 'train', 'seg')))
@@ -127,8 +136,10 @@ def get_train_val_loader(path, split):
 
 if __name__ == '__main__':
     data_path = "dlcv-final-problem1-talking-to-me/student_data/student_data"
-    train, val = get_train_val_loader(data_path, 0.8)
-    print(len(train))
-    seg, audio, label = train[6]
+
+    train_set, val_set = get_train_val_loader(data_path, 0.8)
+    print(len(train_set))
+    
+    seg, audio, label = train_set[6]
     print(seg.size())
     print(audio.size())
