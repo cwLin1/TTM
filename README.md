@@ -8,6 +8,12 @@ Data Preprocessing (Video to audio)
 Data Preprocessing (Video to feature)
 	
 	cd video_features
+	# install environment
+	conda env create -f conda_env_torch_zoo.yml
+
+	# load the environment
+	conda activate torch_zoo
+
 	python main.py feature_type=i3d device="cuda:0" stream=["rgb"]
 
 Dataset 
