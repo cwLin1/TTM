@@ -9,24 +9,8 @@ from torch.utils.data import DataLoader, Dataset
 import torchaudio
 
 #====Transforms====
-test_tfm = transforms.Compose([
-    transforms.Resize(224),
-    transforms.CenterCrop(224),
-    transforms.ToTensor(),
-    transforms.Normalize([0.485, 0.456, 0.406],
-                         [0.229, 0.224, 0.225])
-])
-
-train_tfm = transforms.Compose([
-    transforms.Resize(224),
-    transforms.CenterCrop(224),
-    transforms.ToTensor(),
-    transforms.Normalize([0.485, 0.456, 0.406],
-                         [0.229, 0.224, 0.225])
-])
-
 class Ego4D(Dataset):
-    def __init__(self, data_dir, tfm, split, subset = 'test'):
+    def __init__(self, data_dir, split, subset = 'test', tfm = None):
         super(Ego4D).__init__()
         self.video_dir = os.path.join(data_dir, 'videos')
         self.audio_dir = os.path.join(data_dir, 'audios')
@@ -62,11 +46,12 @@ class Ego4D(Dataset):
         end_frame = int(seg_id['end_frame'])
         label = float(seg_id['ttm'])
 
-        feature_id = video_id + '_' + person_id + '_' + start_frame + '_' + end_frame
+        feature_id = video_id + '_' + person_id + '_' + str(start_frame) + '_' + str(end_frame)
         feature_path = os.path.join(self.feature_dir, feature_id + '.npy')
         audio_path = os.path.join(self.audio_dir, video_id + '.wav')
 
         video_feature = np.load(feature_path)
+        video_feature = torch.from_numpy(video_feature)
 
         ori_audio, ori_sample_rate = torchaudio.load(audio_path, normalize = True)
         sample_rate = 16000
@@ -94,8 +79,8 @@ def get_train_val_loader(path, split):
     num_train = len(os.listdir(os.path.join(path, 'train', 'seg')))
     valid_slice = int(num_train * split)
 
-    data_train = Ego4D(path, train_tfm, valid_slice, 'train')
-    data_val = Ego4D(path, test_tfm, valid_slice, 'test')
+    data_train = Ego4D(path, valid_slice, 'train')
+    data_val = Ego4D(path, valid_slice, 'test')
 
     return data_train, data_val
 
@@ -104,13 +89,13 @@ def get_train_val_loader(path, split):
 if __name__ == '__main__':
     data_path = "dlcv-final-problem1-talking-to-me/student_data/student_data"
 
-    train_set, val_set = get_train_val_loader(data_path, 0.8)
+    train_set, val_set = get_train_val_loader(data_path, 1)
     print(len(train_set))
 
     seg, audio, label = train_set[0]
     print(seg.size())
     print(audio.size())
 
-    seg, audio, label = train_set[6]
-    print(seg.size())
-    print(audio.size())
+    # seg, audio, label = train_set[6]
+    # print(seg.size())
+    # print(audio.size())
