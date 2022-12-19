@@ -17,7 +17,12 @@ Dataset
 Data Format 
 
 	TTM / 
-		dlcv-final-problem1-talking-to-me/… 
+		dlcv-final-problem1-talking-to-me/student_data/student_data/
+			audios
+			i3d
+			train
+			test
+			videos
 		utils/ 
 			dataset.py 
 			data_preprocess.py 
