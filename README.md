@@ -8,6 +8,7 @@ Data Preprocessing (Video to audio)
 Data Preprocessing (Video to feature)
 	
 	cd video_features
+	
 	# install environment
 	conda env create -f conda_env_torch_zoo.yml
 
