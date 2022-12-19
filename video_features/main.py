@@ -54,18 +54,12 @@ def main(args_cli):
                 row['video_id'] = video_id
                 seg.append(row)
 
-    # print(seg[11136])
-    # feature = extractor.extract(seg[0])
-    # print(feature['rgb'].shape)
-    # print(feature['rgb'].shape)
-
-    for segment in tqdm(seg[11136:]):
+    os.makedirs(os.path.join(data_dir, args.feature_type), exist_ok=True)
+    for segment in tqdm(seg):
         feature = extractor.extract(segment)
-        save_path = os.path.join(data_dir, "i3d", segment['video_id'] + '_' + segment['person_id'] + '_' + segment['start_frame'] + '_' + segment['end_frame'] + '.npy')
+        save_path = os.path.join(data_dir, args.feature_type, segment['video_id'] + '_' + segment['person_id'] + '_' + segment['start_frame'] + '_' + segment['end_frame'] + '.npy')
         np.save(save_path, feature['rgb'])
-    # for video_path in tqdm(video_paths):
-    #     extractor._extract(video_path)  # note the `_` in the method name
-
+        
     # yep, it is this simple!
 
 
