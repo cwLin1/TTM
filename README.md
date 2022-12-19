@@ -27,6 +27,8 @@ Data Format
 		dlcv-final-problem1-talking-to-me/student_data/student_data/
 			audios/
 			i3d/
+			r21d/
+			s3d
 			train/
 			test/
 			videos/
