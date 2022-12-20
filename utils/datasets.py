@@ -14,7 +14,8 @@ class Ego4D(Dataset):
         super(Ego4D).__init__()
         self.video_dir = os.path.join(data_dir, 'videos')
         self.audio_dir = os.path.join(data_dir, 'audios')
-        self.feature_dir = os.path.join(data_dir, 'i3d')
+        self.video_feature_dir = os.path.join(data_dir, 'i3d')
+        self.MFCC_dir = os.path.join(data_dir, 'MFCC')
         self.seg_dir = os.path.join(data_dir, 'train', 'seg')
 
         self.video_ids = sorted([x.split('_')[0] for x in os.listdir(self.seg_dir)])
@@ -40,6 +41,7 @@ class Ego4D(Dataset):
   
     def __getitem__(self, idx):
         seg_id = self.seg[idx]
+        # print(seg_id)
         video_id = seg_id['video_id']
         person_id = seg_id['person_id']
         start_frame = int(seg_id['start_frame'])
@@ -47,27 +49,31 @@ class Ego4D(Dataset):
         label = float(seg_id['ttm'])
 
         feature_id = video_id + '_' + person_id + '_' + str(start_frame) + '_' + str(end_frame)
-        feature_path = os.path.join(self.feature_dir, feature_id + '.npy')
-        audio_path = os.path.join(self.audio_dir, video_id + '.wav')
+        video_feature_path = os.path.join(self.video_feature_dir, feature_id + '.npy')
+        audio_feature_path = os.path.join(self.MFCC_dir, feature_id + '.npy')
 
-        video_feature = np.load(feature_path)
-        video_feature = torch.from_numpy(video_feature)
+        video_feature = np.load(video_feature_path)
+        video_feature = torch.from_numpy(video_feature).float()
 
-        ori_audio, ori_sample_rate = torchaudio.load(audio_path, normalize = True)
-        sample_rate = 16000
-        audio_resample = torchaudio.transforms.Resample(ori_sample_rate, sample_rate)
-        audio = audio_resample(ori_audio)
+        audio_feature = np.load(audio_feature_path)
+        audio_feature = torch.from_numpy(audio_feature).float()
+
+        # ori_audio, ori_sample_rate = torchaudio.load(audio_path, normalize = True)
+        # sample_rate = 16000
+        # audio_resample = torchaudio.transforms.Resample(ori_sample_rate, sample_rate)
+        # audio = audio_resample(ori_audio)
         # print(audio.size())
 
-        onset = int(start_frame/30 * sample_rate)
-        offset = int(end_frame/30 * sample_rate)
+        # onset = int(start_frame/30 * sample_rate)
+        # offset = int(end_frame/30 * sample_rate)
 
-        crop_audio = torch.zeros(2, 34134 * int(np.ceil((offset-onset)/34134)))
-        crop_audio[:, 0:offset - onset] = audio[:, onset:offset]
-        crop_audio = crop_audio.view(int(np.ceil((offset-onset)/34134)), 2, 34134)
+        # crop_audio = torch.zeros(2, 34134 * max(1, int(np.ceil((offset-onset)/34134))))
+        # crop_audio[:, 0:offset - onset] = audio[:, onset:offset]
+        # crop_audio = crop_audio.view(max(1, int(np.ceil((offset-onset)/34134))), 2, 34134)
         # crop_audio = audio[:, onset:offset]
-        audio_transform = torchaudio.transforms.MFCC()
-        audio_feature = audio_transform(crop_audio)
+        # print(crop_audio.size())
+        # audio_transform = torchaudio.transforms.MFCC()
+        # audio_feature = audio_transform(crop_audio)
 
         # ======
         # video_feature: n x 1024
@@ -75,14 +81,17 @@ class Ego4D(Dataset):
         # ======
         return video_feature, audio_feature, label
 
-def get_train_val_loader(path, split):
-    num_train = len(os.listdir(os.path.join(path, 'train', 'seg')))
+def get_train_val_loader(path, split, subset='train'):
+    num_train = len(os.listdir(os.path.join(path, subset, 'seg')))
     valid_slice = int(num_train * split)
-
-    data_train = Ego4D(path, valid_slice, 'train')
-    data_val = Ego4D(path, valid_slice, 'test')
-
-    return data_train, data_val
+    if subset == 'train':
+        data_train = Ego4D(path, valid_slice, 'train')
+        data_val = Ego4D(path, valid_slice, 'test')
+        return data_train, data_val
+    else:
+        data_test = Ego4D(path, 0, 'test')
+        return data_test
+    
 
 
 
@@ -90,12 +99,8 @@ if __name__ == '__main__':
     data_path = "dlcv-final-problem1-talking-to-me/student_data/student_data"
 
     train_set, val_set = get_train_val_loader(data_path, 1)
-    print(len(train_set))
+    # print(len(train_set))
 
-    seg, audio, label = train_set[0]
-    print(seg.size())
-    print(audio.size())
-
-    # seg, audio, label = train_set[6]
-    # print(seg.size())
-    # print(audio.size())
+    seg, audio, label = train_set[6]
+    print(seg)
+    # print(audio)
