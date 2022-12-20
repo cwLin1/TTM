@@ -8,10 +8,6 @@ import torch.nn as nn
 
 from models.model import load_model
 from utils.datasets import get_train_val_loader
-from torch.utils.data import Dataset, DataLoader, random_split
-
-# def form_slice(batch_size, length):
-#     return [[i*batch_size, min((i+1)*batch_size, length)] for i in range(int(length//batch_size)+1)]
 
 device = ("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -37,31 +33,6 @@ for epoch in range(n_epochs):
     model.train()
     loss_record = []
     acc_record = []
-
-    # for start, end in tqdm(train_slice):
-    #     x_video_batch = []
-    #     x_audio_batch = []
-    #     labels_batch = []
-
-    #     for idx in range(start, end):
-    #         x_video, x_audio, label = train_set[idx]
-    #         x_video = x_video.to(device)        # Move your data to device.
-    #         x_audio = x_audio.to(device)
-    #         b_size = x_video.size(0)
-    #         labels = (label * torch.ones(b_size)).to(torch.int64).to(device)
-    #         x_video_batch.append(x_video)
-    #         x_audio_batch.append(x_audio)
-    #         labels_batch.append(labels)
-    #     x_video_batch = torch.cat(x_video_batch)
-    #     x_audio_batch = torch.cat(x_audio_batch)
-    #     labels_batch = torch.cat(labels_batch)
-    #     pred = model(x_video_batch, x_audio_batch)
-    #     loss = criterion(pred, labels_batch)
-    #     loss.backward()                     # Compute gradient(backpropagation).
-    #     optimizer.step()                    # Update parameters.
-
-    #     loss_record.append(loss.detach().item())
-
 
     for x_video, x_audio, label in tqdm(train_set):
         b_size = x_video.size(0)
