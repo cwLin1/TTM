@@ -60,6 +60,9 @@ class Ego4D(Dataset):
         video_feature_path = os.path.join(self.video_feature_dir, feature_id + '.npy')
         audio_feature_path = os.path.join(self.MFCC_dir, feature_id + '.npy')
 
+        if video_feature.shape[0] > audio_feature.shape[0]:
+            video_feature = video_feature[:audio_feature.shape[0]]
+        
         video_feature = np.load(video_feature_path)
         video_feature = torch.from_numpy(video_feature).float()
 
