@@ -12,14 +12,18 @@ import torchaudio
 class Ego4D(Dataset):
     def __init__(self, data_dir, split, subset = 'test', tfm = None):
         super(Ego4D).__init__()
+        self.subset = subset
         self.video_dir = os.path.join(data_dir, 'videos')
         self.audio_dir = os.path.join(data_dir, 'audios')
         self.video_feature_dir = os.path.join(data_dir, 'i3d')
         self.MFCC_dir = os.path.join(data_dir, 'MFCC')
-        self.seg_dir = os.path.join(data_dir, 'train', 'seg')
+        if self.subset == 'val' or self.subset == 'train':
+            self.seg_dir = os.path.join(data_dir, 'train', 'seg')
+        else:
+            self.seg_dir = os.path.join(data_dir, 'test', 'seg')
 
         self.video_ids = sorted([x.split('_')[0] for x in os.listdir(self.seg_dir)])
-        if subset == 'train':
+        if self.subset == 'train':
             self.video_ids = self.video_ids[:split]
         else:
             self.video_ids = self.video_ids[split:]
@@ -46,9 +50,13 @@ class Ego4D(Dataset):
         person_id = seg_id['person_id']
         start_frame = int(seg_id['start_frame'])
         end_frame = int(seg_id['end_frame'])
-        label = float(seg_id['ttm'])
-
         feature_id = video_id + '_' + person_id + '_' + str(start_frame) + '_' + str(end_frame)
+
+        if self.subset == 'test':
+            label = feature_id
+        else:
+            label = float(seg_id['ttm'])
+        
         video_feature_path = os.path.join(self.video_feature_dir, feature_id + '.npy')
         audio_feature_path = os.path.join(self.MFCC_dir, feature_id + '.npy')
 
@@ -79,6 +87,8 @@ class Ego4D(Dataset):
         # video_feature: n x 1024
         # audio_feature: n x 2 x 40 x 171
         # ======
+        if self.subset == 'test':
+            return video_feature, audio_feature, feature_id
         return video_feature, audio_feature, label
 
 def get_train_val_loader(path, split, subset='train'):
@@ -86,14 +96,12 @@ def get_train_val_loader(path, split, subset='train'):
     valid_slice = int(num_train * split)
     if subset == 'train':
         data_train = Ego4D(path, valid_slice, 'train')
-        data_val = Ego4D(path, valid_slice, 'test')
+        data_val = Ego4D(path, valid_slice, 'val')
         return data_train, data_val
     else:
         data_test = Ego4D(path, 0, 'test')
         return data_test
     
-
-
 
 if __name__ == '__main__':
     data_path = "dlcv-final-problem1-talking-to-me/student_data/student_data"

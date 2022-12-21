@@ -8,20 +8,27 @@ import torch.nn as nn
 
 from models.model import load_model
 from utils.datasets import get_train_val_loader
+from torch.utils.data import Dataset, DataLoader, random_split
+
+# def form_slice(batch_size, length):
+#     return [[i*batch_size, min((i+1)*batch_size, length)] for i in range(int(length//batch_size)+1)]
 
 device = ("cuda" if torch.cuda.is_available() else "cpu")
 
 data_path = "dlcv-final-problem1-talking-to-me/student_data/student_data"
 train_set, val_set = get_train_val_loader(data_path, 0.8)
 
-model = load_model(1024+13680).to(device)
+# model_path = "ckpts/last.ckpt"
+model_path = None
+model = load_model(1024+13680, model_path).to(device)
 
-n_epochs, best_acc = 320, 0
+n_epochs = 128
+best_acc = 0
 
 criterion = nn.MSELoss(reduction='mean')
 # criterion = nn.CrossEntropyLoss()
-optimizer = torch.optim.Adam(model.parameters(), lr=0.0003, weight_decay=1e-5)
-
+# optimizer = torch.optim.Adam(model.parameters(), lr=0.0003, weight_decay=1e-5)
+optimizer = torch.optim.SGD(model.parameters(), lr=1e-3, momentum=0.9)
 loss_train = []
 acc_train = []
 loss_val = []
@@ -29,12 +36,38 @@ acc_val = []
 
 # train_slice = form_slice(64, len(train_set))
 
-for epoch in range(n_epochs):
+for epoch in range(0, n_epochs):
     model.train()
     loss_record = []
     acc_record = []
 
-    for x_video, x_audio, label in tqdm(train_set):
+    # for start, end in tqdm(train_slice):
+    #     x_video_batch = []
+    #     x_audio_batch = []
+    #     labels_batch = []
+
+    #     for idx in range(start, end):
+    #         x_video, x_audio, label = train_set[idx]
+    #         x_video = x_video.to(device)        # Move your data to device.
+    #         x_audio = x_audio.to(device)
+    #         b_size = x_video.size(0)
+    #         labels = (label * torch.ones(b_size)).to(torch.int64).to(device)
+    #         x_video_batch.append(x_video)
+    #         x_audio_batch.append(x_audio)
+    #         labels_batch.append(labels)
+    #     x_video_batch = torch.cat(x_video_batch)
+    #     x_audio_batch = torch.cat(x_audio_batch)
+    #     labels_batch = torch.cat(labels_batch)
+    #     pred = model(x_video_batch, x_audio_batch)
+    #     loss = criterion(pred, labels_batch)
+    #     loss.backward()                     # Compute gradient(backpropagation).
+    #     optimizer.step()                    # Update parameters.
+
+    #     loss_record.append(loss.detach().item())
+
+    shuffle = np.random.permutation(len(train_set))
+    for i in tqdm(range(len(train_set))):
+        x_video, x_audio, label = train_set[shuffle[i]]
         b_size = x_video.size(0)
         optimizer.zero_grad()               # Set gradient to zero.
         x_video = x_video.to(device)        # Move your data to device.
@@ -80,9 +113,10 @@ for epoch in range(n_epochs):
     loss_val = sum(loss_record)/len(loss_record)
     acc_val = sum(acc_record)/len(acc_record)
     print(f"[ Valid | {epoch + 1:03d}/{n_epochs:03d} ] loss = {loss_val:.5f}, acc = {acc_val:.5f}")
+    torch.save(model.state_dict(), "ckpts/last.ckpt")
 
-    if acc_val > best_acc:
+    if acc_val.item() > best_acc:
         torch.save(model.state_dict(), "ckpts/best.ckpt")
-        best_acc = acc_val
+        best_acc = acc_val.item()
         
     print("Best acc:", best_acc)

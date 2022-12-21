@@ -22,44 +22,46 @@ def audio_transform(data_dir):
         # audio.write_audiofile(os.path.join(audio_dir, video_id + '.wav'))
 
 def audio_feature(data_dir):
-    seg_dir = os.path.join(data_dir, 'train', 'seg')
-    video_ids = sorted([x.split('_')[0] for x in os.listdir(seg_dir)])
-    seg = []
-    
-    for video_id in video_ids:
-        seg_path = os.path.join(seg_dir, video_id + '_seg.csv')
-        with open(seg_path, newline='') as csvfile:
-            rows = csv.DictReader(csvfile)
-            for row in rows:
-                row['video_id'] = video_id
-                seg.append(row)
+    sets = ['test']
+    for subset in sets:
+        seg_dir = os.path.join(data_dir, subset, 'seg')
+        video_ids = sorted([x.split('_')[0] for x in os.listdir(seg_dir)])
+        seg = []
+        
+        for video_id in video_ids:
+            seg_path = os.path.join(seg_dir, video_id + '_seg.csv')
+            with open(seg_path, newline='') as csvfile:
+                rows = csv.DictReader(csvfile)
+                for row in rows:
+                    row['video_id'] = video_id
+                    seg.append(row)
 
-    audio_dir = os.path.join(data_dir, 'audios')
-    feature_dir = os.path.join(data_dir, 'MFCC')
-    os.makedirs(feature_dir, exist_ok=True)
-    
-    for seg_id in tqdm(seg):
-        video_id = seg_id['video_id']
-        start_frame = int(seg_id['start_frame'])
-        end_frame = int(seg_id['end_frame'])
+        audio_dir = os.path.join(data_dir, 'audios')
+        feature_dir = os.path.join(data_dir, 'MFCC')
+        os.makedirs(feature_dir, exist_ok=True)
+        
+        for seg_id in tqdm(seg):
+            video_id = seg_id['video_id']
+            start_frame = int(seg_id['start_frame'])
+            end_frame = int(seg_id['end_frame'])
 
-        audio_path = os.path.join(audio_dir, video_id + '.wav')
-        ori_audio, ori_sample_rate = torchaudio.load(audio_path, normalize = True)
-        sample_rate = 16000
-        audio_resample = torchaudio.transforms.Resample(ori_sample_rate, sample_rate)
-        audio = audio_resample(ori_audio)
+            audio_path = os.path.join(audio_dir, video_id + '.wav')
+            ori_audio, ori_sample_rate = torchaudio.load(audio_path, normalize = True)
+            sample_rate = 16000
+            audio_resample = torchaudio.transforms.Resample(ori_sample_rate, sample_rate)
+            audio = audio_resample(ori_audio)
 
-        onset = int(start_frame/30 * sample_rate)
-        offset = int(end_frame/30 * sample_rate)
-        crop_audio = torch.zeros(2, 34134 * max(1, int(np.ceil((offset-onset)/34134))))
-        crop_audio[:, 0:offset - onset] = audio[:, onset:offset]
-        crop_audio = crop_audio.view(max(1, int(np.ceil((offset-onset)/34134))), 2, 34134)
+            onset = int(start_frame/30 * sample_rate)
+            offset = int(end_frame/30 * sample_rate)
+            crop_audio = torch.zeros(2, 34134 * max(1, int(np.ceil((offset-onset)/34134))))
+            crop_audio[:, 0:offset - onset] = audio[:, onset:offset]
+            crop_audio = crop_audio.view(max(1, int(np.ceil((offset-onset)/34134))), 2, 34134)
 
-        audio_transform = torchaudio.transforms.MFCC()
-        audio_feature = audio_transform(crop_audio).numpy()
-        save_path = os.path.join(data_dir, 'MFCC', seg_id['video_id'] + '_' + seg_id['person_id'] + '_' + seg_id['start_frame'] + '_' + seg_id['end_frame'] + '.npy')
+            audio_transform = torchaudio.transforms.MFCC()
+            audio_feature = audio_transform(crop_audio).numpy()
+            save_path = os.path.join(data_dir, 'MFCC', seg_id['video_id'] + '_' + seg_id['person_id'] + '_' + seg_id['start_frame'] + '_' + seg_id['end_frame'] + '.npy')
 
-        np.save(save_path, audio_feature)
+            np.save(save_path, audio_feature)
 
 
 def video_transform(data_path):
