@@ -23,9 +23,13 @@ Download Feature
 
 -MFCC: https://drive.google.com/file/d/1EzXAI36-1XvS2WhVxzoGo_AREWXxBTxQ/view?usp=share_link 
 
-Dataset 
+Train 
 
-	python utils/datasets.py
+	python train.py
+	
+Evaluate (Modify your path before) 
+
+	python eval.py
 
 Data Format 
 
