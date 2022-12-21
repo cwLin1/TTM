@@ -27,7 +27,7 @@ Train
 
 	python train.py
 	
-Evaluate (Modify your path before) 
+Evaluate (Modify your path before running.) 
 
 	python eval.py
 
