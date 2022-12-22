@@ -17,7 +17,7 @@ test_set = get_train_val_loader(data_path, 0, 'test')
 
 model_path = "ckpts/best.ckpt"
 model = load_model(1024+13680, model_path).to(device)
-model.()
+model.eval()
 
 output_path = '1.csv'
 file = open(output_path, 'w')
