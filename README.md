@@ -25,6 +25,10 @@ Download Feature
 
 -MFCC: https://drive.google.com/file/d/1EzXAI36-1XvS2WhVxzoGo_AREWXxBTxQ/view?usp=share_link 
 
+-R(2+1)D: https://drive.google.com/file/d/1bF5BGmmQOKdkS5XeCwlZWVCRgVtycYjj/view?usp=share_link
+
+-VGGish: https://drive.google.com/file/d/1GBzG1LcknLptVcu7yZzZYo50EqOsWhI5/view?usp=share_link
+
 Train 
 
 	python train.py
