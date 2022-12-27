@@ -14,14 +14,14 @@ device = ("cuda" if torch.cuda.is_available() else "cpu")
 
 data_path = "dlcv-final-problem1-talking-to-me/student_data/student_data"
 train_set, val_set = get_train_val_loader(data_path, 0.8)
+output_dim = 1
 
 # model_path = "ckpts/last.ckpt"
 model_path = None
-model = load_model(1024, 256, model_path).to(device)
+model = load_model(1024, 384, output_dim, model_path).to(device)
 
 n_epochs = 80
 best_acc = 0
-output_dim = 1
 
 if output_dim == 1:
     criterion = nn.BCEWithLogitsLoss()
