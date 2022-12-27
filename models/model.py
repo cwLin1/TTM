@@ -95,8 +95,8 @@ class MLP(nn.Module):
 
     def forward(self, x_video, x_audio):
 
-        if x_audio.size(0) < x_video.size(0)*2:
-            padding = torch.zeros(x_video.size(0)*2, 128).to('cuda')
+        if x_audio.size(0) < x_video.size(0)*3:
+            padding = torch.zeros(x_video.size(0)*3, 128).to('cuda')
             padding[:x_audio.size(0)] = x_audio
             x_audio = padding
         x_audio = x_audio[:x_video.size(0)*2].view(x_video.size(0), -1)
